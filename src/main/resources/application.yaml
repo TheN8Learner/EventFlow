@@ -1,0 +1,34 @@
+server:
+  port: 8080
+  servlet:
+    context-path:
+
+
+spring:
+  application:
+    name: EventFlow
+  datasource:
+    url: jdbc:postgresql://localhost:5432/eventflow
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  security:
+    jwt:
+      secret-key: 4dd68c782062eb1a4a2ce340f5ab1130aa4a57a060e3f49ef4eeb4530d77881ad26819126e755b8738518d1d274ee61d530f5dc3713b9595b4602589a08fc2ad
+      expiration-ms: 900000
+      refresh-expiration-ms: 604800000
+
+logging:
+  level:
+    root: INFO
+    com.eventflow: DEBUG
+

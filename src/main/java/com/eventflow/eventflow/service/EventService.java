@@ -1,0 +1,127 @@
+package com.eventflow.eventflow.service;
+
+import com.eventflow.eventflow.dto.CategoryResponseDto;
+import com.eventflow.eventflow.dto.EventRequestDto;
+import com.eventflow.eventflow.dto.EventResponseDto;
+import com.eventflow.eventflow.model.*;
+import com.eventflow.eventflow.repository.CategoryRepository;
+import com.eventflow.eventflow.repository.EventRepository;
+import com.eventflow.eventflow.repository.UserEventRoleRepository;
+import com.eventflow.eventflow.repository.UserRepository;
+import com.sun.jdi.request.EventRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import com.eventflow.eventflow.exceptions.ResourceNotFoundException;
+
+@Service
+public class EventService {
+
+    private final EventRepository eventRepository;
+    private final UserEventRoleRepository userEventRoleRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+
+    public EventService(EventRepository eventRepository, EventRepository eventRepository1, UserEventRoleRepository userEventRoleRepository, UserRepository userRepository, CategoryRepository categoryRepository) {
+        this.eventRepository = eventRepository1;
+        this.userEventRoleRepository = userEventRoleRepository;
+        this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
+    }
+
+    public Page<EventResponseDto> getEvents(Pageable pageable) {
+        Page<Event> events = eventRepository.findAll(pageable);
+
+        return events.map(event -> new EventResponseDto(
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getFlyer(),
+                event.getDate(),
+                event.getCapacityMax(),
+                event.getStatus(),
+                event.getCreator().getId(),
+                event.getCreator().getLastName(),
+                event.getCreator().getEmail(),
+                event.getCategories()
+                        .stream()
+                        .map(category -> new CategoryResponseDto(
+                                category.getId(),
+                                category.getName()
+                        ))
+                        .toList()
+        ));
+    }
+
+    public Event getEventById(Long id) {
+        return eventRepository.findById(id).orElseThrow(
+                ()-> new ResourceNotFoundException("Event with id " + id + " not found")
+        );
+    }
+
+
+    public EventResponseDto createEvent(EventRequestDto eventRequest) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        User creator = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<Category> categories = new ArrayList<>();
+
+        for(long id : eventRequest.getCategoryIds()) {
+            Category category = categoryRepository.findById(id).orElseThrow();
+            categories.add(category);
+        }
+        
+        Event event = new Event(
+                eventRequest.getTitle(),
+                eventRequest.getDescription(),
+                eventRequest.getFlyer(),
+                eventRequest.getDate(),
+                eventRequest.getCapacityMax(),
+                EventStatus.PUBLISHED,
+                creator,
+                categories
+        );
+
+        event.setRegistrations(new ArrayList<>());
+
+        Event savedEvent = eventRepository.save(event);
+
+        UserEventRole userEventRole = new UserEventRole(
+                creator,
+                savedEvent,
+                EventRole.ORGANISATEUR
+        );
+
+        userEventRoleRepository.save(userEventRole);
+
+        return new EventResponseDto(
+                savedEvent.getId(),
+                savedEvent.getTitle(),
+                savedEvent.getDescription(),
+                savedEvent.getFlyer(),
+                savedEvent.getDate(),
+                savedEvent.getCapacityMax(),
+                savedEvent.getStatus(),
+                savedEvent.getCreator().getId(),
+                savedEvent.getCreator().getLastName(),
+                savedEvent.getCreator().getEmail(),
+                savedEvent.getCategories()
+                        .stream()
+                        .map(category -> new CategoryResponseDto(
+                                category.getId(),
+                                category.getName()
+                        ))
+                        .toList()        );
+    }
+}
