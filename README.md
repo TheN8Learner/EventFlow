@@ -90,8 +90,8 @@ Authentication
 
 - POST `/api/v1/register` — register a new user
 - POST `/api/v1/login` — login and receive a JWT
-- POST `/api/v1/auth/admin/register` — register an admin (protected/allowed by config)
-- POST `/api/v1/auth/admin/login` — admin login
+- POST `/api/v1/admin/register` — register an admin
+- POST `/api/v1/admin/login` — admin login
 
 User endpoints
 
@@ -117,7 +117,7 @@ Authentication: send the JWT in the `Authorization` header as `Bearer <token>` f
 ## Admin
 
 - Methods that modify categories and certain management actions are restricted to users with the `ADMIN` role (`@PreAuthorize("hasRole('ADMIN')")`).
-- Create an admin via the admin register endpoint or set the role directly in the DB for testing.
+- Create an admin via the admin register endpoint (`/api/v1/admin/register`) or set the role directly in the DB for testing.
 
 ## Project structure (high level)
 

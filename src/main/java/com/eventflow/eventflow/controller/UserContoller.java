@@ -42,28 +42,6 @@ public class UserContoller {
         }
     }
 
-    @PostMapping("/auth/admin/register")
-    public ResponseEntity<?> registerAdmin(@Valid @RequestBody RegisterRequestDto requestDto) {
-        try {
-            String token = authService.registerAdmin(requestDto);
-            return ResponseEntity.ok(token);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @PostMapping("/auth/admin/login")
-    public ResponseEntity<?> loginAdmin(@Valid @RequestBody LoginRequestDto requestDto) {
-        try {
-            String token = authService.adminLogin(requestDto);
-            return ResponseEntity.ok(token);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(403).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getMyProfile() {
         return ResponseEntity.ok(userService.getMyProfile());
