@@ -83,7 +83,6 @@ public class UserService {
         return jwtUtils.generateToken(user.getEmail());
     }
 
-    @PreAuthorize("hasRole(ADMIN)")
     public String loginAdmin(LoginRequestDto requestDto) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -99,6 +98,6 @@ public class UserService {
             throw new ForbiddenException("Access denied: not an admin");
         }
 
-        return "Admin Login successful";
+        return jwtUtils.generateToken(requestDto.getEmail());
     }
 }
