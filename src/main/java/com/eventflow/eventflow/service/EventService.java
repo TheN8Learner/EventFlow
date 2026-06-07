@@ -6,9 +6,9 @@ import com.eventflow.eventflow.dto.EventResponseDto;
 import com.eventflow.eventflow.model.*;
 import com.eventflow.eventflow.repository.CategoryRepository;
 import com.eventflow.eventflow.repository.EventRepository;
+import com.eventflow.eventflow.repository.RegistrationRepository;
 import com.eventflow.eventflow.repository.UserEventRoleRepository;
 import com.eventflow.eventflow.repository.UserRepository;
-import com.sun.jdi.request.EventRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -21,7 +21,9 @@ import java.util.Optional;
 import com.eventflow.eventflow.exceptions.ResourceNotFoundException;
 import com.eventflow.eventflow.exceptions.BadRequestException;
 import org.springframework.data.domain.PageRequest;
-import com.eventflow.eventflow.exceptions.ResourceNotFoundException;
+import com.eventflow.eventflow.dtos.UserResponseDto;
+import com.eventflow.eventflow.model.Registration;
+import com.eventflow.eventflow.model.RegistrationStatus;
 
 @Service
 public class EventService {
@@ -30,13 +32,15 @@ public class EventService {
     private final UserEventRoleRepository userEventRoleRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+        private final RegistrationRepository registrationRepository;
 
-    public EventService(EventRepository eventRepository, UserEventRoleRepository userEventRoleRepository, UserRepository userRepository, CategoryRepository categoryRepository) {
-        this.eventRepository = eventRepository;
-        this.userEventRoleRepository = userEventRoleRepository;
-        this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
-    }
+        public EventService(EventRepository eventRepository, UserEventRoleRepository userEventRoleRepository, UserRepository userRepository, CategoryRepository categoryRepository, RegistrationRepository registrationRepository) {
+                this.eventRepository = eventRepository;
+                this.userEventRoleRepository = userEventRoleRepository;
+                this.userRepository = userRepository;
+                this.categoryRepository = categoryRepository;
+                this.registrationRepository = registrationRepository;
+        }
 
     public Page<EventResponseDto> getEvents(Pageable pageable) {
         Page<Event> events = eventRepository.findAll(pageable);
@@ -61,6 +65,22 @@ public class EventService {
                         .toList()
         ));
     }
+
+        public Page<UserResponseDto> getParticipantsForMyEvent(Long eventId, Pageable pageable) {
+                Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                String email = SecurityContextHolder.getContext().getAuthentication().getName();
+                User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                if (event.getCreator() == null || event.getCreator().getId() != user.getId()) {
+                        throw new BadRequestException("Not authorized to view participants for this event");
+                }
+
+                Page<Registration> regs = registrationRepository.findByEventAndStatus(event, RegistrationStatus.CONFIRMED, pageable);
+                return regs.map(reg -> {
+                        User u = reg.getUser();
+                        return new UserResponseDto(u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(), u.getRole());
+                });
+        }
 
     public Page<EventResponseDto> getPublishedEvents(Pageable pageable) {
         Page<Event> events = eventRepository.findByStatus(EventStatus.PUBLISHED, pageable);
