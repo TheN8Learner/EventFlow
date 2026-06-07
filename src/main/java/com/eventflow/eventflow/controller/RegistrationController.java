@@ -26,11 +26,34 @@ public class RegistrationController {
             @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(registrationService.getRegistrations(pageable));
+        return ResponseEntity.ok(registrationService.getMyRegistrations(pageable));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<Page<RegistrationResponseDto>> getMyRegistrations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(registrationService.getMyRegistrations(pageable));
+    }
+
+    @GetMapping("/my-created-events")
+    public ResponseEntity<Page<RegistrationResponseDto>> getRegistrationsForMyCreatedEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(registrationService.getRegistrationsForMyCreatedEvents(pageable));
     }
 
     @PostMapping
     public ResponseEntity<RegistrationResponseDto> createRegistration(@Valid @RequestBody RegistrationRequestDto requestDto) {
         return ResponseEntity.ok(registrationService.createRegistration(requestDto));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<RegistrationResponseDto> cancelMyRegistration(@PathVariable Long id) {
+        return ResponseEntity.ok(registrationService.cancelMyRegistration(id));
     }
 }

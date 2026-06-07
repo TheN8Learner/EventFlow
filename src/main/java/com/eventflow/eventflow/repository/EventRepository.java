@@ -12,4 +12,5 @@ import org.springframework.data.domain.Pageable;
 public interface EventRepository extends JpaRepository<Event, Long> {
 	Page<Event> findByStatus(EventStatus status, Pageable pageable);
 	Page<Event> findByCreator(User creator, Pageable pageable);
+	Page<Event> findByCreatorId(long creatorId, Pageable pageable);
 }

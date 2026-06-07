@@ -12,5 +12,6 @@ import lombok.*;
 @ToString
 public class RegisterResponseDto {
 
-  private String token;
+  private String accessToken;
+  private String refreshToken;
 }

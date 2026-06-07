@@ -1,0 +1,14 @@
+<div style="max-width:520px">
+  <h2>Create account</h2>
+  <form (ngSubmit)="submit()">
+    <label>First name</label>
+    <input [(ngModel)]="firstName" name="firstName" />
+    <label>Last name</label>
+    <input [(ngModel)]="lastName" name="lastName" />
+    <label>Email</label>
+    <input [(ngModel)]="email" name="email" />
+    <label>Password</label>
+    <input type="password" [(ngModel)]="password" name="password" />
+    <div style="margin-top:12px"><button type="submit">Register</button></div>
+  </form>
+</div>

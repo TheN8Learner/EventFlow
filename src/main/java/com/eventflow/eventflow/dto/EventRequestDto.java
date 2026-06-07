@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,12 +21,16 @@ import java.util.List;
 public class EventRequestDto {
 
     @NotBlank(message = "Title is required")
+    @Size(max = 120, message = "Title must be 120 characters or less")
     private String title;
 
     @NotBlank(message = "Description is required")
+    @Size(max = 2000, message = "Description must be 2000 characters or less")
     private String description;
 
     @NotBlank(message = "flyer is required")
+    @Size(max = 500, message = "flyer URL must be 500 characters or less")
+    @Pattern(regexp = "^https://.+", message = "flyer must be an HTTPS URL")
     private String flyer;
 
     @NotNull(message = "Date is required")
@@ -36,6 +42,7 @@ public class EventRequestDto {
     private Long capacityMax;
 
     @NotNull(message = "categoryIds cant be empty")
+    @Size(min = 1, max = 10, message = "Select between 1 and 10 categories")
     private List<Long> categoryIds;
 
     public EventRequestDto(String title, String description,String flyer, LocalDateTime date, Long capacityMax, List<Long> categoryIds) {

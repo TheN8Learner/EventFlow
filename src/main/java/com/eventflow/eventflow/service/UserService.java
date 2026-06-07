@@ -7,6 +7,7 @@ import com.eventflow.eventflow.exceptions.BadRequestException;
 import com.eventflow.eventflow.exceptions.ResourceNotFoundException;
 import com.eventflow.eventflow.model.User;
 import com.eventflow.eventflow.repository.UserRepository;
+import com.eventflow.eventflow.util.InputSanitizer;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,15 +36,16 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (requestDto.getEmail() != null && !requestDto.getEmail().equals(user.getEmail())) {
-            if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
+        String newEmail = InputSanitizer.email(requestDto.getEmail());
+        if (newEmail != null && !newEmail.equals(user.getEmail())) {
+            if (userRepository.findByEmail(newEmail).isPresent()) {
                 throw new BadRequestException("Email already in use");
             }
-            user.setEmail(requestDto.getEmail());
+            user.setEmail(newEmail);
         }
 
-        user.setFirstName(requestDto.getFirstName());
-        user.setLastName(requestDto.getLastName());
+        user.setFirstName(InputSanitizer.text(requestDto.getFirstName()));
+        user.setLastName(InputSanitizer.text(requestDto.getLastName()));
 
         userRepository.save(user);
 

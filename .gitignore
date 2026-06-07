@@ -32,4 +32,15 @@ build/
 ### VS Code ###
 .vscode/
 .env
-src/main/ressources/application.yaml
+
+### Environment / secrets ###
+.env.*
+!.env.example
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+### Logs ###
+*.log

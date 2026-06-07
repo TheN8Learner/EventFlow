@@ -6,6 +6,7 @@ import com.eventflow.eventflow.dto.RegistrationResponseDto;
 import com.eventflow.eventflow.dtos.UserResponseDto;
 import com.eventflow.eventflow.dto.RegisterRequestDto;
 import com.eventflow.eventflow.dto.LoginRequestDto;
+import com.eventflow.eventflow.dto.LoginResponseDto;
 import com.eventflow.eventflow.service.AdminService;
 import com.eventflow.eventflow.service.AuthService;
 import org.springframework.data.domain.Page;
@@ -65,8 +66,8 @@ public class AdminController {
     @PostMapping("/register")
     public ResponseEntity<?> registerAdmin(@Valid @RequestBody RegisterRequestDto requestDto) {
         try {
-            String token = authService.registerAdmin(requestDto);
-            return ResponseEntity.ok(token);
+            LoginResponseDto tokens = authService.registerAdmin(requestDto);
+            return ResponseEntity.ok(tokens);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -75,8 +76,8 @@ public class AdminController {
     @PostMapping("/login")
     public ResponseEntity<?> loginAdmin(@Valid @RequestBody LoginRequestDto requestDto) {
         try {
-            String token = authService.adminLogin(requestDto);
-            return ResponseEntity.ok(token);
+            LoginResponseDto tokens = authService.adminLogin(requestDto);
+            return ResponseEntity.ok(tokens);
         } catch (RuntimeException e) {
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (Exception e) {

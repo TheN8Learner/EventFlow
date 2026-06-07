@@ -2,6 +2,8 @@ package com.eventflow.eventflow.controller;
 
 import com.eventflow.eventflow.dto.ChangePasswordRequestDto;
 import com.eventflow.eventflow.dto.LoginRequestDto;
+import com.eventflow.eventflow.dto.LoginResponseDto;
+import com.eventflow.eventflow.dto.RefreshTokenRequestDto;
 import com.eventflow.eventflow.dto.RegisterRequestDto;
 import com.eventflow.eventflow.dto.UpdateUserRequestDto;
 import com.eventflow.eventflow.dtos.UserResponseDto;
@@ -23,23 +25,28 @@ public class UserContoller {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequestDto requestDto) {
+    public ResponseEntity<LoginResponseDto> registerUser(@Valid @RequestBody RegisterRequestDto requestDto) {
         try {
-            String token = authService.register(requestDto);
-            return ResponseEntity.ok(token);
+            LoginResponseDto tokens = authService.register(requestDto);
+            return ResponseEntity.ok(tokens);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<LoginResponseDto> loginUser(@Valid @RequestBody LoginRequestDto requestDto) {
         try {
-            String token = authService.login(requestDto);
-            return ResponseEntity.ok(token);
+            LoginResponseDto tokens = authService.login(requestDto);
+            return ResponseEntity.ok(tokens);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<LoginResponseDto> refreshToken(@Valid @RequestBody RefreshTokenRequestDto requestDto) {
+        return ResponseEntity.ok(authService.refreshToken(requestDto.getRefreshToken()));
     }
 
     @GetMapping("/me")

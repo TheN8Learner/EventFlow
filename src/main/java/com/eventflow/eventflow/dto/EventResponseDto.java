@@ -26,5 +26,33 @@ public class EventResponseDto {
     private String creatorName;
     private String creatorEmail;
     private List<CategoryResponseDto> categories;
+    private Long registeredCount;
+    private Long availableSeats;
+
+    public EventResponseDto(
+            Long id,
+            String title,
+            String description,
+            String flyer,
+            LocalDateTime date,
+            Long capacityMax,
+            EventStatus status,
+            Long creatorId,
+            String creatorName,
+            String creatorEmail,
+            List<CategoryResponseDto> categories
+    ) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.flyer = flyer;
+        this.date = date;
+        this.capacityMax = capacityMax;
+        this.status = status;
+        this.creatorId = creatorId;
+        this.creatorName = creatorName;
+        this.creatorEmail = creatorEmail;
+        this.categories = categories;
+    }
 
 }

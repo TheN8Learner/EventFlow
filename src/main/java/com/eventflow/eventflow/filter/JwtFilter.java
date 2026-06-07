@@ -1,6 +1,7 @@
 package com.eventflow.eventflow.filter;
 
 import com.eventflow.eventflow.component.JwtUtils;
+import io.jsonwebtoken.JwtException;
 import com.eventflow.eventflow.service.CustomUserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,16 +34,29 @@ public class JwtFilter extends OncePerRequestFilter {
         String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
-            String email = jwtUtils.getEmailFromToken(token);
+            String email;
+            try {
+                email = jwtUtils.getEmailFromToken(token);
+            } catch (JwtException | IllegalArgumentException ex) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
 
             boolean b = SecurityContextHolder.getContext().getAuthentication() == null;
             if(email != null && b) {
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
-                if(jwtUtils.validateToken(token)){
+                try {
+                    if(!jwtUtils.validateToken(token)){
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        return;
+                    }
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                } catch (JwtException | IllegalArgumentException ex) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
                 }
             }
         }
