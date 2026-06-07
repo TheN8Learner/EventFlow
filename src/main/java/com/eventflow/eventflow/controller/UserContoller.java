@@ -1,7 +1,11 @@
 package com.eventflow.eventflow.controller;
 
+import com.eventflow.eventflow.dto.ChangePasswordRequestDto;
 import com.eventflow.eventflow.dto.LoginRequestDto;
 import com.eventflow.eventflow.dto.RegisterRequestDto;
+import com.eventflow.eventflow.dto.UpdateUserRequestDto;
+import com.eventflow.eventflow.dtos.UserResponseDto;
+import com.eventflow.eventflow.service.AuthService;
 import com.eventflow.eventflow.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -10,16 +14,18 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 public class UserContoller {
+    private final AuthService authService;
     private final UserService userService;
 
-    public UserContoller(UserService userService) {
+    public UserContoller(AuthService authService, UserService userService) {
+        this.authService = authService;
         this.userService = userService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequestDto requestDto) {
         try {
-            String token = userService.registerUser(requestDto);
+            String token = authService.register(requestDto);
             return ResponseEntity.ok(token);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -29,7 +35,7 @@ public class UserContoller {
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequestDto requestDto) {
         try {
-            String token = userService.loginUser(requestDto);
+            String token = authService.login(requestDto);
             return ResponseEntity.ok(token);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
@@ -39,7 +45,7 @@ public class UserContoller {
     @PostMapping("/auth/admin/register")
     public ResponseEntity<?> registerAdmin(@Valid @RequestBody RegisterRequestDto requestDto) {
         try {
-            String token = userService.registerAdmin(requestDto);
+            String token = authService.registerAdmin(requestDto);
             return ResponseEntity.ok(token);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -49,12 +55,28 @@ public class UserContoller {
     @PostMapping("/auth/admin/login")
     public ResponseEntity<?> loginAdmin(@Valid @RequestBody LoginRequestDto requestDto) {
         try {
-            String message = userService.loginAdmin(requestDto);
-            return ResponseEntity.ok(message);
+            String token = authService.adminLogin(requestDto);
+            return ResponseEntity.ok(token);
         } catch (RuntimeException e) {
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> getMyProfile() {
+        return ResponseEntity.ok(userService.getMyProfile());
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserResponseDto> updateMyProfile(@Valid @RequestBody UpdateUserRequestDto requestDto) {
+        return ResponseEntity.ok(userService.updateMyProfile(requestDto));
+    }
+
+    @PostMapping("/me/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequestDto requestDto) {
+        userService.changePassword(requestDto);
+        return ResponseEntity.ok().build();
     }
 }

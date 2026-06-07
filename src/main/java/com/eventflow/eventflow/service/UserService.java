@@ -1,103 +1,65 @@
 package com.eventflow.eventflow.service;
 
-import com.eventflow.eventflow.component.JwtUtils;
-import com.eventflow.eventflow.dto.LoginRequestDto;
-import com.eventflow.eventflow.dto.RegisterRequestDto;
-import com.eventflow.eventflow.model.Role;
+import com.eventflow.eventflow.dto.ChangePasswordRequestDto;
+import com.eventflow.eventflow.dto.UpdateUserRequestDto;
+import com.eventflow.eventflow.dtos.UserResponseDto;
+import com.eventflow.eventflow.exceptions.BadRequestException;
+import com.eventflow.eventflow.exceptions.ResourceNotFoundException;
 import com.eventflow.eventflow.model.User;
 import com.eventflow.eventflow.repository.UserRepository;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.eventflow.eventflow.exceptions.ResourceNotFoundException;
-import com.eventflow.eventflow.exceptions.ForbiddenException;
-
-import java.util.ArrayList;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
-    private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtUtils = jwtUtils;
     }
 
-    public String registerUser(RegisterRequestDto requestDto) {
-        if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email already in use");
+    public UserResponseDto getMyProfile() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return new UserResponseDto(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole());
+    }
+
+    public UserResponseDto updateMyProfile(UpdateUserRequestDto requestDto) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (requestDto.getEmail() != null && !requestDto.getEmail().equals(user.getEmail())) {
+            if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
+                throw new BadRequestException("Email already in use");
+            }
+            user.setEmail(requestDto.getEmail());
         }
 
-        User user = new User(
-                requestDto.getFirstName(),
-                requestDto.getLastName(),
-                requestDto.getEmail(),
-                passwordEncoder.encode(requestDto.getPassword())
-        );
-        user.setRole(Role.USER);
-        user.setEvents(new ArrayList<>());
-        user.setEventRoles(new ArrayList<>());
-        user.setRegistrations(new ArrayList<>());
+        user.setFirstName(requestDto.getFirstName());
+        user.setLastName(requestDto.getLastName());
+
         userRepository.save(user);
 
-        return jwtUtils.generateToken(user.getEmail());
+        return new UserResponseDto(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole());
     }
 
-    public String loginUser(LoginRequestDto requestDto) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        requestDto.getEmail(),
-                        requestDto.getPassword()
-                )
-        );
+    public void changePassword(ChangePasswordRequestDto requestDto) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
-            return jwtUtils.generateToken(requestDto.getEmail());
+        if (!passwordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
+            throw new BadRequestException("Current password is incorrect");
         }
 
-        throw new ResourceNotFoundException("User not found");
-    }
-
-    public String registerAdmin(RegisterRequestDto requestDto) {
-        if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email already in use");
-        }
-
-        User user = new User(
-                requestDto.getFirstName(),
-                requestDto.getLastName(),
-                requestDto.getEmail(),
-                passwordEncoder.encode(requestDto.getPassword())
-        );
-        user.setRole(Role.ADMIN);
+        user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
         userRepository.save(user);
-
-        return jwtUtils.generateToken(user.getEmail());
-    }
-
-    public String loginAdmin(LoginRequestDto requestDto) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        requestDto.getEmail(),
-                        requestDto.getPassword()
-                )
-        );
-
-        User user = userRepository.findByEmail(requestDto.getEmail())
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (user.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("Access denied: not an admin");
-        }
-
-        return jwtUtils.generateToken(requestDto.getEmail());
     }
 }

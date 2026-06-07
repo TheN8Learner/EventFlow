@@ -14,4 +14,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 	long countByEventAndStatus(Event event, RegistrationStatus status);
 	Page<Registration> findAll(Pageable pageable);
 	boolean existsByEventAndUser(Event event, User user);
+	Page<Registration> findByUser(User user, Pageable pageable);
+	Page<Registration> findByEvent(Event event, Pageable pageable);
+	Page<Registration> findByEventAndStatus(Event event, RegistrationStatus status, Pageable pageable);
 }
