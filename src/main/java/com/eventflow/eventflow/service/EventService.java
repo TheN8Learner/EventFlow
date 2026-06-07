@@ -139,6 +139,36 @@ public class EventService {
         ));
     }
 
+    public Page<EventResponseDto> getMyJoinedEvents(Pageable pageable) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Page<Registration> regs = registrationRepository.findByUserAndStatus(user, RegistrationStatus.CONFIRMED, pageable);
+
+        return regs.map(reg -> {
+            Event event = reg.getEvent();
+            return new EventResponseDto(
+                    event.getId(),
+                    event.getTitle(),
+                    event.getDescription(),
+                    event.getFlyer(),
+                    event.getDate(),
+                    event.getCapacityMax(),
+                    event.getStatus(),
+                    event.getCreator() != null ? event.getCreator().getId() : null,
+                    event.getCreator() != null ? event.getCreator().getLastName() : null,
+                    event.getCreator() != null ? event.getCreator().getEmail() : null,
+                    event.getCategories()
+                            .stream()
+                            .map(category -> new CategoryResponseDto(
+                                    category.getId(),
+                                    category.getName()
+                            ))
+                            .toList()
+            );
+        });
+    }
+
         public EventResponseDto updateMyEvent(Long eventId, EventRequestDto eventRequest) {
                 Event event = eventRepository.findById(eventId).orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
