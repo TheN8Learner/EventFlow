@@ -123,6 +123,14 @@ export class ApiService {
     return this.http.get<Page<Registration>>(`${this.baseUrl}/api/v1/registrations/my-created-events`, { params: this.pageParams(page, size) });
   }
 
+  registrationsForMyCreatedEvent(eventId: number, status?: 'CONFIRMED' | 'WAITLISTED', page = 0, size = 100) {
+    let params = this.pageParams(page, size);
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http.get<Page<Registration>>(`${this.baseUrl}/api/v1/registrations/my-created-events/${eventId}`, { params });
+  }
+
   registerToEvent(eventId: number) {
     return this.http.post<Registration>(`${this.baseUrl}/api/v1/registrations`, { eventId });
   }

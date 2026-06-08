@@ -612,6 +612,18 @@ h3 {
   padding: 20px;
 }
 
+.metric-action {
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.metric-action:hover,
+.metric-action:focus-visible {
+  border-color: rgba(37, 99, 235, 0.45);
+  outline: none;
+  transform: translateY(-2px);
+}
+
 .stats-grid strong,
 .metric-grid strong,
 .organizer-stats strong {
@@ -1229,7 +1241,8 @@ textarea {
   grid-template-columns: repeat(4, 1fr);
 }
 
-.organizer-stats span {
+.organizer-stats span,
+.organizer-stats button {
   background: #f8fafc;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -1237,9 +1250,86 @@ textarea {
   padding: 16px;
 }
 
+.organizer-stats button {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.organizer-stats button:hover,
+.organizer-stats button:focus-visible {
+  border-color: rgba(37, 99, 235, 0.45);
+  outline: none;
+  transform: translateY(-2px);
+}
+
 .organizer-stats strong {
   font-size: 1.7rem;
   margin-bottom: 4px;
+}
+
+.registration-panel {
+  background:
+    linear-gradient(180deg, rgba(6, 182, 212, 0.05), rgba(255, 255, 255, 0)),
+    var(--surface);
+}
+
+.registration-browser {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.registration-event-list,
+.registration-user-list {
+  display: grid;
+  gap: 10px;
+}
+
+.registration-event-list button,
+.registration-user-list article {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.registration-event-list button {
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.registration-event-list button.active,
+.registration-event-list button:hover,
+.registration-event-list button:focus-visible {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  outline: none;
+}
+
+.registration-event-list strong,
+.registration-event-list span,
+.registration-user-list strong,
+.registration-user-list span {
+  display: block;
+}
+
+.registration-event-list span,
+.registration-user-list span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-top: 4px;
+}
+
+.registration-user-list article {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
 }
 
 .form-grid {
@@ -1759,6 +1849,15 @@ textarea {
 
   .event-management-actions .button {
     flex: 1 1 120px;
+  }
+
+  .registration-browser {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-user-list article {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .admin-sidebar {

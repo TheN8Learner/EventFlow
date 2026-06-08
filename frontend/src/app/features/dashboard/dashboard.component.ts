@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { Category, EventItem, Registration } from '../../core/api.models';
+import { Category, EventItem, Registration, RegistrationStatus } from '../../core/api.models';
 
 type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
 
@@ -69,11 +69,11 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
             <span>Published events</span>
             <strong>{{ publishedCreatedEvents }}</strong>
           </article>
-          <article>
+          <article class="metric-action" (click)="openRegistrationPanel('CONFIRMED')" tabindex="0" role="button" (keydown.enter)="openRegistrationPanel('CONFIRMED')">
             <span>Visible registrations</span>
             <strong>{{ activeOrganizerRegistrations.length }}</strong>
           </article>
-          <article>
+          <article class="metric-action" (click)="openRegistrationPanel('WAITLISTED')" tabindex="0" role="button" (keydown.enter)="openRegistrationPanel('WAITLISTED')">
             <span>Waitlisted users</span>
             <strong>{{ waitlistedOrganizerRegistrations }}</strong>
           </article>
@@ -130,6 +130,8 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                         <button class="button secondary compact" type="button" disabled>
                           Votre event
                         </button>
+                      } @else if (canJoinWaitlist(event)) {
+                        <button class="button secondary compact" type="button" (click)="toggleRegistration(event.id, $event)">Join waitlist</button>
                       } @else if (!canJoin(event)) {
                         <button class="button blocked compact" type="button" disabled>
                           {{ joinDisabledText(event) }}
@@ -222,10 +224,64 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                 <div class="organizer-stats">
                   <span><strong>{{ createdEvents.length }}</strong> Events created</span>
                   <span><strong>{{ publishedCreatedEvents }}</strong> Published events</span>
-                  <span><strong>{{ activeOrganizerRegistrations.length }}</strong> Visible registrations</span>
-                  <span><strong>{{ waitlistedOrganizerRegistrations }}</strong> Waitlisted users</span>
+                  <button type="button" (click)="openRegistrationPanel('CONFIRMED')"><strong>{{ activeOrganizerRegistrations.length }}</strong> Visible registrations</button>
+                  <button type="button" (click)="openRegistrationPanel('WAITLISTED')"><strong>{{ waitlistedOrganizerRegistrations }}</strong> Waitlisted users</button>
                 </div>
               </section>
+
+              @if (registrationPanelOpen) {
+                <section class="panel registration-panel">
+                  <div class="section-title">
+                    <div>
+                      <p class="eyebrow">Participants</p>
+                      <h2>{{ selectedRegistrationStatus === 'WAITLISTED' ? 'Waitlisted users' : 'Visible registrations' }}</h2>
+                    </div>
+                    <button class="button secondary compact" type="button" (click)="closeRegistrationPanel()">Close</button>
+                  </div>
+
+                  @if (createdEvents.length === 0) {
+                    <p class="empty">Create an event first to see registrations.</p>
+                  } @else {
+                    <div class="registration-browser">
+                      <div class="registration-event-list">
+                        @for (event of createdEvents; track event.id) {
+                          <button
+                            type="button"
+                            [class.active]="selectedRegistrationEventId === event.id"
+                            (click)="selectRegistrationEvent(event.id)"
+                          >
+                            <strong>{{ event.title }}</strong>
+                            <span>
+                              {{ registrationsForEvent(event.id, selectedRegistrationStatus).length }}
+                              {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted' : 'registered' }}
+                            </span>
+                          </button>
+                        }
+                      </div>
+
+                      <div class="registration-user-list">
+                        @if (selectedEventRegistrationsLoading) {
+                          <p class="empty">Loading registrations...</p>
+                        } @else if (selectedEventRegistrations.length === 0) {
+                          <p class="empty">No {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted users' : 'visible registrations' }} for this event.</p>
+                        } @else {
+                          @for (registration of selectedEventRegistrations; track registration.id) {
+                            <article>
+                              <div>
+                                <strong>{{ registration.userName || ('User #' + registration.userId) }}</strong>
+                                <span>{{ registration.userEmail || 'Email unavailable' }}</span>
+                              </div>
+                              <span class="status" [class.success]="registration.status === 'CONFIRMED'">
+                                {{ registration.status }}
+                              </span>
+                            </article>
+                          }
+                        }
+                      </div>
+                    </div>
+                  }
+                </section>
+              }
 
               <section class="panel my-events-panel">
                 <div class="section-title">
@@ -399,7 +455,11 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                     }
                   </div>
                 } @else if (!canJoin(selectedEvent)) {
-                  <button class="button blocked" type="button" disabled>{{ joinDisabledText(selectedEvent) }}</button>
+                  @if (canJoinWaitlist(selectedEvent)) {
+                    <button class="button secondary" type="button" (click)="toggleRegistration(selectedEvent.id, $event)">Join waitlist</button>
+                  } @else {
+                    <button class="button blocked" type="button" disabled>{{ joinDisabledText(selectedEvent) }}</button>
+                  }
                 } @else {
                   <button class="button primary" type="button" (click)="toggleRegistration(selectedEvent.id, $event)">Join event</button>
                 }
@@ -425,6 +485,11 @@ export class DashboardComponent implements OnInit {
   message = '';
   hasError = false;
   selectedEvent: EventItem | null = null;
+  registrationPanelOpen = false;
+  selectedRegistrationStatus: Extract<RegistrationStatus, 'CONFIRMED' | 'WAITLISTED'> = 'CONFIRMED';
+  selectedRegistrationEventId: number | null = null;
+  selectedEventRegistrations: Registration[] = [];
+  selectedEventRegistrationsLoading = false;
   readonly fallbackFlyer = 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=900&q=80';
 
   eventForm = {
@@ -448,7 +513,7 @@ export class DashboardComponent implements OnInit {
   }
 
   get activeOrganizerRegistrations() {
-    return this.organizerRegistrations.filter((registration) => registration.status !== 'CANCELLED');
+    return this.organizerRegistrations.filter((registration) => registration.status === 'CONFIRMED');
   }
 
   get syncedJoinedEvents() {
@@ -544,6 +609,10 @@ export class DashboardComponent implements OnInit {
     return this.organizerRegistrations.filter((registration) => registration.status === 'WAITLISTED').length;
   }
 
+  registrationsForEvent(eventId: number, status: RegistrationStatus) {
+    return this.organizerRegistrations.filter((registration) => registration.eventId === eventId && registration.status === status);
+  }
+
   ngOnInit() {
     this.route.data.subscribe((data) => {
       this.viewMode = (data['view'] as DashboardView | undefined) ?? 'events';
@@ -605,8 +674,13 @@ export class DashboardComponent implements OnInit {
       complete: done
     });
 
-    this.api.registrationsForMyCreatedEvents().subscribe({
-      next: (page) => this.organizerRegistrations = page.content,
+    this.api.registrationsForMyCreatedEvents(0, 1000).subscribe({
+      next: (page) => {
+        this.organizerRegistrations = page.content;
+        if (this.registrationPanelOpen && this.selectedRegistrationEventId) {
+          this.loadSelectedEventRegistrations();
+        }
+      },
       error: () => {
         this.organizerRegistrations = [];
         done();
@@ -650,6 +724,10 @@ export class DashboardComponent implements OnInit {
     return event.status === 'PUBLISHED' && !this.isEventFull(event) && !this.isMyCreatedEvent(event.id);
   }
 
+  canJoinWaitlist(event: EventItem) {
+    return (event.status === 'PUBLISHED' || event.status === 'COMPLETED') && this.isEventFull(event) && !this.isMyCreatedEvent(event.id);
+  }
+
   joinDisabledText(event: EventItem) {
     if (event.status === 'COMPLETED' || this.isEventFull(event)) {
       return 'Completed';
@@ -676,6 +754,24 @@ export class DashboardComponent implements OnInit {
 
   canCancelEvent(event: EventItem) {
     return this.isMyCreatedEvent(event.id) && event.status !== 'CANCELLED';
+  }
+
+  openRegistrationPanel(status: Extract<RegistrationStatus, 'CONFIRMED' | 'WAITLISTED'>) {
+    this.registrationPanelOpen = true;
+    this.selectedRegistrationStatus = status;
+    const eventWithRegistrations = this.createdEvents.find((event) => this.registrationsForEvent(event.id, status).length > 0);
+    this.selectedRegistrationEventId = eventWithRegistrations?.id ?? this.createdEvents[0]?.id ?? null;
+    this.loadSelectedEventRegistrations();
+  }
+
+  closeRegistrationPanel() {
+    this.registrationPanelOpen = false;
+    this.selectedEventRegistrations = [];
+  }
+
+  selectRegistrationEvent(eventId: number) {
+    this.selectedRegistrationEventId = eventId;
+    this.loadSelectedEventRegistrations();
   }
 
   toggleCategory(id: number) {
@@ -772,7 +868,7 @@ export class DashboardComponent implements OnInit {
     }
 
     const event = this.findEvent(eventId);
-    if (!event || !this.canJoin(event)) {
+    if (!event || (!this.canJoin(event) && !this.canJoinWaitlist(event))) {
       this.flash(event ? `This event is ${this.joinDisabledText(event).toLowerCase()}.` : 'Event unavailable.', true);
       return;
     }
@@ -831,6 +927,23 @@ export class DashboardComponent implements OnInit {
     }
     this.api.eventDetails(eventId).subscribe({
       next: (details) => this.selectedEvent = details
+    });
+  }
+
+  private loadSelectedEventRegistrations() {
+    if (!this.registrationPanelOpen || !this.selectedRegistrationEventId) {
+      this.selectedEventRegistrations = [];
+      return;
+    }
+
+    this.selectedEventRegistrationsLoading = true;
+    this.api.registrationsForMyCreatedEvent(this.selectedRegistrationEventId, this.selectedRegistrationStatus, 0, 500).subscribe({
+      next: (page) => this.selectedEventRegistrations = page.content,
+      error: () => {
+        this.selectedEventRegistrations = this.registrationsForEvent(this.selectedRegistrationEventId!, this.selectedRegistrationStatus);
+        this.flash('Unable to load live registrations for this event.', true);
+      },
+      complete: () => this.selectedEventRegistrationsLoading = false
     });
   }
 

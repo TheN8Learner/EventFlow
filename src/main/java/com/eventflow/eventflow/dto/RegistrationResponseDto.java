@@ -18,5 +18,15 @@ public class RegistrationResponseDto {
     private RegistrationStatus status;
     private Long eventId;
     private Long userId;
+    private String userName;
+    private String userEmail;
+    private String eventTitle;
+
+    public RegistrationResponseDto(Long id, RegistrationStatus status, Long eventId, Long userId) {
+        this.id = id;
+        this.status = status;
+        this.eventId = eventId;
+        this.userId = userId;
+    }
 
 }

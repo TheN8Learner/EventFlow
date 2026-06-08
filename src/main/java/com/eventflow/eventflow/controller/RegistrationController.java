@@ -2,6 +2,7 @@ package com.eventflow.eventflow.controller;
 
 import com.eventflow.eventflow.dto.RegistrationRequestDto;
 import com.eventflow.eventflow.dto.RegistrationResponseDto;
+import com.eventflow.eventflow.model.RegistrationStatus;
 import com.eventflow.eventflow.service.RegistrationService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -45,6 +46,17 @@ public class RegistrationController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(registrationService.getRegistrationsForMyCreatedEvents(pageable));
+    }
+
+    @GetMapping("/my-created-events/{eventId}")
+    public ResponseEntity<Page<RegistrationResponseDto>> getRegistrationsForMyCreatedEvent(
+            @PathVariable Long eventId,
+            @RequestParam(required = false) RegistrationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(registrationService.getRegistrationsForMyCreatedEvent(eventId, status, pageable));
     }
 
     @PostMapping

@@ -87,4 +87,7 @@ export interface Registration {
   status: RegistrationStatus;
   eventId: number;
   userId: number;
+  userName?: string;
+  userEmail?: string;
+  eventTitle?: string;
 }
