@@ -259,24 +259,43 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                         }
                       </div>
 
+                      <div class="registration-results">
+                        <div class="registration-tools">
+                          <label class="search-field">
+                            <span>Search participant</span>
+                            <input name="registrationSearch" [(ngModel)]="registrationSearch" placeholder="Name or email">
+                          </label>
+                          <span class="registration-count">
+                            {{ filteredSelectedEventRegistrations.length }} / {{ selectedEventRegistrations.length }}
+                          </span>
+                        </div>
+
                       <div class="registration-user-list">
                         @if (selectedEventRegistrationsLoading) {
                           <p class="empty">Loading registrations...</p>
                         } @else if (selectedEventRegistrations.length === 0) {
                           <p class="empty">No {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted users' : 'visible registrations' }} for this event.</p>
+                        } @else if (filteredSelectedEventRegistrations.length === 0) {
+                          <p class="empty">No participant matches this search.</p>
                         } @else {
-                          @for (registration of selectedEventRegistrations; track registration.id) {
+                          <div class="registration-row registration-head" aria-hidden="true">
+                            <span>Name</span>
+                            <span>Email</span>
+                            <span>Status</span>
+                          </div>
+                          @for (registration of filteredSelectedEventRegistrations; track registration.id) {
                             <article>
                               <div>
                                 <strong>{{ registration.userName || ('User #' + registration.userId) }}</strong>
-                                <span>{{ registration.userEmail || 'Email unavailable' }}</span>
                               </div>
+                              <span class="registration-email">{{ registration.userEmail || 'Email unavailable' }}</span>
                               <span class="status" [class.success]="registration.status === 'CONFIRMED'">
                                 {{ registration.status }}
                               </span>
                             </article>
                           }
                         }
+                      </div>
                       </div>
                     </div>
                   }
@@ -490,6 +509,7 @@ export class DashboardComponent implements OnInit {
   selectedRegistrationEventId: number | null = null;
   selectedEventRegistrations: Registration[] = [];
   selectedEventRegistrationsLoading = false;
+  registrationSearch = '';
   readonly fallbackFlyer = 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=900&q=80';
 
   eventForm = {
@@ -611,6 +631,17 @@ export class DashboardComponent implements OnInit {
 
   registrationsForEvent(eventId: number, status: RegistrationStatus) {
     return this.organizerRegistrations.filter((registration) => registration.eventId === eventId && registration.status === status);
+  }
+
+  get filteredSelectedEventRegistrations() {
+    const term = this.registrationSearch.trim().toLowerCase();
+    if (!term) {
+      return this.selectedEventRegistrations;
+    }
+
+    return this.selectedEventRegistrations.filter((registration) =>
+      `${registration.userName || ''} ${registration.userEmail || ''} ${registration.userId}`.toLowerCase().includes(term)
+    );
   }
 
   ngOnInit() {
@@ -767,10 +798,12 @@ export class DashboardComponent implements OnInit {
   closeRegistrationPanel() {
     this.registrationPanelOpen = false;
     this.selectedEventRegistrations = [];
+    this.registrationSearch = '';
   }
 
   selectRegistrationEvent(eventId: number) {
     this.selectedRegistrationEventId = eventId;
+    this.registrationSearch = '';
     this.loadSelectedEventRegistrations();
   }
 

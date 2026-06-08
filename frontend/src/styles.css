@@ -1283,9 +1283,16 @@ textarea {
 }
 
 .registration-event-list,
-.registration-user-list {
+.registration-user-list,
+.registration-results {
   display: grid;
   gap: 10px;
+}
+
+.registration-event-list {
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .registration-event-list button,
@@ -1325,12 +1332,49 @@ textarea {
   margin-top: 4px;
 }
 
+.registration-results {
+  min-width: 0;
+}
+
+.registration-tools {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.registration-count {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 950;
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+
+.registration-user-list {
+  max-height: 540px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.registration-row,
 .registration-user-list article {
   align-items: center;
-  display: flex;
+  display: grid;
   gap: 12px;
-  justify-content: space-between;
+  grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.2fr) auto;
   min-width: 0;
+}
+
+.registration-row {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 950;
+  padding: 0 12px;
+  text-transform: uppercase;
 }
 
 .registration-user-list article > div {
@@ -1345,6 +1389,11 @@ textarea {
 .registration-user-list span {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.registration-email {
+  margin-top: 0 !important;
+  min-width: 0;
 }
 
 .form-grid {
@@ -1870,9 +1919,22 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .registration-tools {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .registration-count {
+    text-align: center;
+  }
+
+  .registration-row {
+    display: none;
+  }
+
   .registration-user-list article {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .admin-sidebar {
