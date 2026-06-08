@@ -1360,24 +1360,16 @@ textarea {
   padding-right: 4px;
 }
 
-.registration-row,
 .registration-user-list article {
   align-items: center;
-  display: grid;
+  display: flex;
   gap: 12px;
-  grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.2fr) auto;
+  justify-content: space-between;
   min-width: 0;
 }
 
-.registration-row {
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 950;
-  padding: 0 12px;
-  text-transform: uppercase;
-}
-
 .registration-user-list article > div {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -1389,11 +1381,6 @@ textarea {
 .registration-user-list span {
   overflow-wrap: anywhere;
   word-break: break-word;
-}
-
-.registration-email {
-  margin-top: 0 !important;
-  min-width: 0;
 }
 
 .form-grid {
@@ -1928,13 +1915,9 @@ textarea {
     text-align: center;
   }
 
-  .registration-row {
-    display: none;
-  }
-
   .registration-user-list article {
     align-items: stretch;
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .admin-sidebar {

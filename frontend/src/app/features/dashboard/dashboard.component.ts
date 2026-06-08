@@ -278,17 +278,12 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                         } @else if (filteredSelectedEventRegistrations.length === 0) {
                           <p class="empty">No participant matches this search.</p>
                         } @else {
-                          <div class="registration-row registration-head" aria-hidden="true">
-                            <span>Name</span>
-                            <span>Email</span>
-                            <span>Status</span>
-                          </div>
                           @for (registration of filteredSelectedEventRegistrations; track registration.id) {
                             <article>
                               <div>
                                 <strong>{{ registration.userName || ('User #' + registration.userId) }}</strong>
+                                <span>{{ registration.userEmail || 'Email unavailable' }}</span>
                               </div>
-                              <span class="registration-email">{{ registration.userEmail || 'Email unavailable' }}</span>
                               <span class="status" [class.success]="registration.status === 'CONFIRMED'">
                                 {{ registration.status }}
                               </span>
