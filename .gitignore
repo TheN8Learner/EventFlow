@@ -44,3 +44,6 @@ frontend/.angular/
 
 ### Logs ###
 *.log
+
+### Local tools ###
+cli/
