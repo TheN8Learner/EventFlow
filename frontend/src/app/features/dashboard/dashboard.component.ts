@@ -243,23 +243,36 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                     <p class="empty">Create an event first to see registrations.</p>
                   } @else {
                     <div class="registration-browser">
-                      <div class="registration-event-list">
-                        @for (event of createdEvents; track event.id) {
-                          <button
-                            type="button"
-                            [class.active]="selectedRegistrationEventId === event.id"
-                            (click)="selectRegistrationEvent(event.id)"
-                          >
-                            <strong>{{ event.title }}</strong>
-                            <span>
-                              {{ registrationsForEvent(event.id, selectedRegistrationStatus).length }}
-                              {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted' : 'registered' }}
-                            </span>
-                          </button>
-                        }
+                      <div class="registration-events-box">
+                        <h3>Choose an event</h3>
+                        <div class="registration-event-list">
+                          @for (event of createdEvents; track event.id) {
+                            <button
+                              type="button"
+                              [class.active]="selectedRegistrationEventId === event.id"
+                              (click)="selectRegistrationEvent(event.id)"
+                            >
+                              <strong>{{ event.title }}</strong>
+                              <span>
+                                {{ registrationsForEvent(event.id, selectedRegistrationStatus).length }}
+                                {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted' : 'registered' }}
+                              </span>
+                            </button>
+                          }
+                        </div>
                       </div>
 
                       <div class="registration-results">
+                        <div class="registration-results-title">
+                          <div>
+                            <h3>{{ selectedRegistrationEventTitle || 'Participants for selected event' }}</h3>
+                            <span>{{ selectedRegistrationStatus === 'WAITLISTED' ? 'Waitlist' : 'Confirmed registrations' }}</span>
+                          </div>
+                        </div>
+
+                        @if (!selectedRegistrationEventId) {
+                          <p class="empty">Select an event above to see its participants.</p>
+                        } @else {
                         <div class="registration-tools">
                           <label class="search-field">
                             <span>Search participant</span>
@@ -270,27 +283,28 @@ type DashboardView = 'events' | 'joined' | 'created' | 'organizer';
                           </span>
                         </div>
 
-                      <div class="registration-user-list">
-                        @if (selectedEventRegistrationsLoading) {
-                          <p class="empty">Loading registrations...</p>
-                        } @else if (selectedEventRegistrations.length === 0) {
-                          <p class="empty">No {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted users' : 'visible registrations' }} for this event.</p>
-                        } @else if (filteredSelectedEventRegistrations.length === 0) {
-                          <p class="empty">No participant matches this search.</p>
-                        } @else {
-                          @for (registration of filteredSelectedEventRegistrations; track registration.id) {
-                            <article>
-                              <div>
-                                <strong>{{ registration.userName || ('User #' + registration.userId) }}</strong>
-                                <span>{{ registration.userEmail || 'Email unavailable' }}</span>
-                              </div>
-                              <span class="status" [class.success]="registration.status === 'CONFIRMED'">
-                                {{ registration.status }}
-                              </span>
-                            </article>
+                        <div class="registration-user-list">
+                          @if (selectedEventRegistrationsLoading) {
+                            <p class="empty">Loading registrations...</p>
+                          } @else if (selectedEventRegistrations.length === 0) {
+                            <p class="empty">No {{ selectedRegistrationStatus === 'WAITLISTED' ? 'waitlisted users' : 'visible registrations' }} for this event.</p>
+                          } @else if (filteredSelectedEventRegistrations.length === 0) {
+                            <p class="empty">No participant matches this search.</p>
+                          } @else {
+                            @for (registration of filteredSelectedEventRegistrations; track registration.id) {
+                              <article>
+                                <div>
+                                  <strong>{{ registration.userName || ('User #' + registration.userId) }}</strong>
+                                  <span>{{ registration.userEmail || 'Email unavailable' }}</span>
+                                </div>
+                                <span class="status" [class.success]="registration.status === 'CONFIRMED'">
+                                  {{ registration.status }}
+                                </span>
+                              </article>
+                            }
                           }
+                        </div>
                         }
-                      </div>
                       </div>
                     </div>
                   }
@@ -639,6 +653,10 @@ export class DashboardComponent implements OnInit {
     );
   }
 
+  get selectedRegistrationEventTitle() {
+    return this.createdEvents.find((event) => event.id === this.selectedRegistrationEventId)?.title ?? '';
+  }
+
   ngOnInit() {
     this.route.data.subscribe((data) => {
       this.viewMode = (data['view'] as DashboardView | undefined) ?? 'events';
@@ -785,9 +803,9 @@ export class DashboardComponent implements OnInit {
   openRegistrationPanel(status: Extract<RegistrationStatus, 'CONFIRMED' | 'WAITLISTED'>) {
     this.registrationPanelOpen = true;
     this.selectedRegistrationStatus = status;
-    const eventWithRegistrations = this.createdEvents.find((event) => this.registrationsForEvent(event.id, status).length > 0);
-    this.selectedRegistrationEventId = eventWithRegistrations?.id ?? this.createdEvents[0]?.id ?? null;
-    this.loadSelectedEventRegistrations();
+    this.selectedRegistrationEventId = null;
+    this.selectedEventRegistrations = [];
+    this.registrationSearch = '';
   }
 
   closeRegistrationPanel() {

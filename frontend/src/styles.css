@@ -1276,10 +1276,24 @@ textarea {
 }
 
 .registration-browser {
-  align-items: start;
   display: grid;
-  gap: 16px;
-  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.registration-events-box,
+.registration-results {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.registration-events-box h3,
+.registration-results-title h3 {
+  margin: 0;
 }
 
 .registration-event-list,
@@ -1290,7 +1304,8 @@ textarea {
 }
 
 .registration-event-list {
-  max-height: 520px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  max-height: 240px;
   overflow: auto;
   padding-right: 4px;
 }
@@ -1333,7 +1348,21 @@ textarea {
 }
 
 .registration-results {
-  min-width: 0;
+  min-height: 260px;
+}
+
+.registration-results-title {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+}
+
+.registration-results-title span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 850;
+  margin-top: 4px;
 }
 
 .registration-tools {
@@ -1355,7 +1384,7 @@ textarea {
 }
 
 .registration-user-list {
-  max-height: 540px;
+  max-height: 360px;
   overflow: auto;
   padding-right: 4px;
 }
