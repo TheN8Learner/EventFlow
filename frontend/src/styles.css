@@ -1330,6 +1330,21 @@ textarea {
   display: flex;
   gap: 12px;
   justify-content: space-between;
+  min-width: 0;
+}
+
+.registration-user-list article > div {
+  min-width: 0;
+}
+
+.registration-user-list article .status {
+  flex: 0 0 auto;
+}
+
+.registration-user-list strong,
+.registration-user-list span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .form-grid {
